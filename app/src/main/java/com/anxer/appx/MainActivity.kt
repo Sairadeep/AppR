@@ -33,8 +33,7 @@ class MainActivity : AppCompatActivity() {
                 Log.d("serviceConnection", "Service is connected")
                 aidlInterface = IvAidlInterface.Stub.asInterface(p1)
                 val userName = mainBinding.userName.text.toString()
-                //Log.d("Reverse","userName:  $userName")
-                val reverseName: String? = aidlInterface?.getUseremailName(userName.toString())
+                val reverseName: String? = aidlInterface?.getUseremailName(userName)
                 Log.d("Reverse", reverseName.toString())
                 Toast.makeText(this@MainActivity, "Palindrome Value: $reverseName", Toast.LENGTH_SHORT).show()
                 if (userName.equals(reverseName, ignoreCase = true)) Toast.makeText(
