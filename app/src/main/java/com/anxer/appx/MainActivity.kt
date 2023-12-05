@@ -1,11 +1,15 @@
 package com.anxer.appx
 
+import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.anxer.appr.databinding.ActivityMainBinding
@@ -14,7 +18,6 @@ import com.anxer.appr.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
     private lateinit var mainBinding: ActivityMainBinding
     private var aidlInterface: IvAidlInterface? = null
-    private var isServiceConnected: Boolean = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mainBinding = ActivityMainBinding.inflate(layoutInflater)
@@ -23,8 +26,15 @@ class MainActivity : AppCompatActivity() {
         mainBinding.buttonSubmit.setOnClickListener {
             val userName = mainBinding.userName.text.toString()
             Log.d("Name", userName)
-            connection()
         }
+        mainBinding.layout.setOnClickListener {
+            hideKeyBoard(view)
+        }
+        // R = 11
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Log.d(
+            "OSVersion",
+            "OS Version is Higher"
+        ) else connection()
     }
 
     private fun connection() {
@@ -35,7 +45,11 @@ class MainActivity : AppCompatActivity() {
                 val userName = mainBinding.userName.text.toString()
                 val reverseName: String? = aidlInterface?.getUseremailName(userName)
                 Log.d("Reverse", reverseName.toString())
-                Toast.makeText(this@MainActivity, "Palindrome Value: $reverseName", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@MainActivity,
+                    "Palindrome Value: $reverseName",
+                    Toast.LENGTH_SHORT
+                ).show()
                 if (userName.equals(reverseName, ignoreCase = true)) Toast.makeText(
                     this@MainActivity,
                     "$userName is a palindrome.",
@@ -55,6 +69,16 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent("MyPalindromeService")
         intent.setPackage("com.anxer.appx")
         bindService(intent, connection, BIND_AUTO_CREATE)
+    }
+
+    private fun hideKeyBoard(view: View) {
+        val inputManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputManager.hideSoftInputFromWindow(
+            // view.windowToken -> The token of the window or view that currently has focus.
+            // Passing 0 or InputMethodManager.HIDE_NOT_ALWAYS indicates that the keyboard should be hidden if it is currently visible
+            view.windowToken,
+            InputMethodManager.HIDE_NOT_ALWAYS
+        )
     }
 }
 
