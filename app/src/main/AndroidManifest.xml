@@ -7,6 +7,10 @@
         android:name="android.permission.INTERACT_ACROSS_USERS"
         tools:ignore="ProtectedPermissions" />
 
+<queries>
+    <package android:name="com.anxer.appx"/>
+</queries>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
