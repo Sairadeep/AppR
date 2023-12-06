@@ -11,22 +11,25 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.anxer.appo.IpAidlInterface
 import com.anxer.appr.databinding.ActivityMainBinding
 
 
 class MainActivity : AppCompatActivity() {
     private lateinit var mainBinding: ActivityMainBinding
     private var aidlInterface: IvAidlInterface? = null
+    private var secondaryAidlInterface: IpAidlInterface? = null
     private var isServiceRunning: Boolean = false
+    private var isSecondaryServiceRunning: Boolean = false
+    private var userName: String = "Loading...!"
+    private var reverseName: String = "Empty"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mainBinding = ActivityMainBinding.inflate(layoutInflater)
         val view = mainBinding.root
         setContentView(view)
         mainBinding.buttonSubmit.setOnClickListener {
-//            val userName =
             getReversedString(mainBinding.userName.text.toString())
-//            Log.d("Name", userName)
         }
         mainBinding.layout.setOnClickListener {
             hideKeyBoard(view)
@@ -48,24 +51,44 @@ class MainActivity : AppCompatActivity() {
             }
             return
         }
-        val reverseName: String? = aidlInterface?.getUseremailName(userName)
-        Log.d("Reverse", reverseName.toString())
-        Toast.makeText(
-            this@MainActivity,
-            "Palindrome Value: $reverseName",
-            Toast.LENGTH_SHORT
-        ).show()
-        if (userName.equals(reverseName, ignoreCase = true)) Toast.makeText(
-            this@MainActivity,
-            "$userName is a palindrome.",
-            Toast.LENGTH_LONG
-        ).show() else Toast.makeText(
-            this@MainActivity,
-            "$userName is a not a palindrome.",
-            Toast.LENGTH_LONG
-        ).show()
+        reverseName = aidlInterface?.getUseremailName(userName).toString()
+        Log.d("Reverse", reverseName)
+        // App O binding
+        if (secondaryAidlInterface == null) {
+            val intents = Intent("MyCheckService")
+            intents.setPackage("com.anxer.appo")
+            isSecondaryServiceRunning =
+                Utils.isServiceRunning(this@MainActivity, intents::class.java)
+            if (!isSecondaryServiceRunning) {
+                Log.d("secondaryServiceStatus", "Secondary service is starting now..!")
+                startService(intents)
+                bindService(intents, secondaryConnection, BIND_AUTO_CREATE)
+            }
+        } else {
+            val checkValue: Boolean? = secondaryAidlInterface?.checkResult(
+                userName,
+                aidlInterface?.getUseremailName(userName).toString()
+            )
+//            if (checkValue != null) Toast.makeText(
+//                this@MainActivity,
+//                checkValue.toString(),
+//                Toast.LENGTH_LONG
+//            ).show() else Toast.makeText(
+//                this@MainActivity,
+//                "checkValue is empty",
+//                Toast.LENGTH_LONG
+//            ).show()
+            if (checkValue == true) Toast.makeText(
+                this@MainActivity,
+                "$userName is a palindrome",
+                Toast.LENGTH_LONG
+            ).show() else Toast.makeText(
+                this@MainActivity,
+                "$userName is not a palindrome",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
-
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
@@ -80,6 +103,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val secondaryConnection = object : ServiceConnection {
+        override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
+            Log.d("serviceConnection", "Secondary service is connected")
+            secondaryAidlInterface = IpAidlInterface.Stub.asInterface(p1)
+            userName = mainBinding.userName.text.toString()
+            getReversedString(userName)
+        }
+
+        override fun onServiceDisconnected(p0: ComponentName?) {
+            Log.d("Bye", "Secondary service connection is disconnected")
+            unbindService(this)
+        }
+    }
 
     private fun hideKeyBoard(view: View) {
         val inputManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager

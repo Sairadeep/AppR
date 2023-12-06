@@ -7,9 +7,10 @@
         android:name="android.permission.INTERACT_ACROSS_USERS"
         tools:ignore="ProtectedPermissions" />
 
-<queries>
-    <package android:name="com.anxer.appx"/>
-</queries>
+    <queries>
+        <package android:name="com.anxer.appx" />
+        <package android:name="com.anxer.appo" />
+    </queries>
 
     <application
         android:allowBackup="true"
